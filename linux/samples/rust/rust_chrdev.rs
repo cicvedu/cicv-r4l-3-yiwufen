@@ -2,7 +2,7 @@
 
 //! Rust character device sample.
 
-use core::result::Result::Err;
+use core::result::Result::{Err, Ok};
 
 use kernel::prelude::*;
 use kernel::sync::Mutex;
@@ -39,12 +39,27 @@ impl file::Operations for RustFile {
         )
     }
 
-    fn write(_this: &Self,_file: &file::File,_reader: &mut impl kernel::io_buffer::IoBufferReader,_offset:u64,) -> Result<usize> {
-        Err(EPERM)
+    /// 写入函数，用于将数据写入设备
+    fn write(_this: &Self, _file: &file::File, _reader: &mut impl kernel::io_buffer::IoBufferReader, _offset: u64) -> Result<usize> {
+        let mut buf = _this.inner.lock();
+        let len = _reader.len();
+
+        // 根据偏移量调整写入位置
+        let offset = _offset as usize;
+        let len = core::cmp::min(len, GLOBALMEM_SIZE - offset);
+        let data = _reader.read_all()?;
+        buf[offset..offset + len].copy_from_slice(&data[..len]);
+        Ok(len)
     }
 
     fn read(_this: &Self,_file: &file::File,_writer: &mut impl kernel::io_buffer::IoBufferWriter,_offset:u64,) -> Result<usize> {
-        Err(EPERM)
+        let buf = _this.inner.lock();
+        // 计算可从偏移量开始读取的最大字节数
+        let max_readable = GLOBALMEM_SIZE - _offset as usize;
+        // 获取实际要读取的数据切片
+        let data_to_read = &buf[_offset as usize.._offset as usize + max_readable];
+        _writer.write_slice(data_to_read)?;
+        Ok(data_to_read.len())
     }
 }
 

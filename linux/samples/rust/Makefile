@@ -16,4 +16,7 @@ obj-$(CONFIG_SAMPLE_RUST_ECHO_SERVER)		+= rust_echo_server.o
 obj-$(CONFIG_SAMPLE_RUST_FS)			+= rust_fs.o
 obj-$(CONFIG_SAMPLE_RUST_SELFTESTS)		+= rust_selftests.o
 
+# 当 RUST_HELLOWORLD 被配置为模块 (m) 时
+obj-$(CONFIG_RUST_HELLOWORLD) += rust_helloworld.o
+
 subdir-$(CONFIG_SAMPLE_RUST_HOSTPROGS)		+= hostprogs

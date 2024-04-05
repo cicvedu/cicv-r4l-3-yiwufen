@@ -163,4 +163,12 @@ config SAMPLE_RUST_SELFTESTS
 
 	  If unsure, say N.
 
+config RUST_HELLOWORLD
+    tristate "Rust HelloWorld support"
+    help
+      Choose this option to enable the Rust HelloWorld demo.
+      This demo shows how to integrate Rust code into the Linux kernel.
+
+      If unsure, say N.
+
 endif # SAMPLES_RUST

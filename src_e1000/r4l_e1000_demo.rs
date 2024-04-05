@@ -7,6 +7,7 @@
 use core::iter::Iterator;
 use core::sync::atomic::AtomicPtr;
 
+use kernel::driver::DeviceRemoval;
 use kernel::pci::Resource;
 use kernel::prelude::*;
 use kernel::sync::Arc;
@@ -297,10 +298,10 @@ struct E1000DrvPrvData {
 
 impl driver::DeviceRemoval for E1000DrvPrvData {
     fn device_remove(&self) {
+        let netdev = self._netdev_reg.dev_get().deref();
         pr_info!("Rust for linux e1000 driver demo (device_remove)\n");
     }
 }
-
 struct NapiHandler{}
 
 impl net::NapiPoller for NapiHandler {
@@ -467,6 +468,13 @@ impl pci::Driver for E1000Drv {
     }
 
     fn remove(data: &Self::Data) {
+        // 相反地，如果网络设备驱动检测到物理链路不再活跃（例如，以太网电缆被拔出），
+        // 它会调用netif_carrier_off。这个函数的调用通知内核网络堆栈停止向该网络设备发送数据，
+        // 因为没有活跃的物理链路。这对于管理网络设备的状态以及响应物理网络变化非常重要。
+        data._netdev_reg.dev_get().netif_carrier_off();
+        data._netdev_reg.dev_get().netif_stop_queue();
+
+        let bars = data._netdev_reg.dev_get().select_bars((bindings::IORESOURCE_MEM | bindings::IORESOURCE_IO) as u64);
         pr_info!("Rust for linux e1000 driver demo (remove)\n");
     }
 }
